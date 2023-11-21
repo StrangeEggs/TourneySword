@@ -1,0 +1,12 @@
+{
+    "className": "Tool",
+    "properties": {
+        "TextureId": "http://www.roblox.com/asset/?id=124987047",
+        "RequiresHandle": true,
+        "CanBeDropped": false,
+        "Grip": [0, 0, -1.5, 0, 0, 1, 1, 0, 0, 0, 1, 0],
+        "Attributes": {
+            "InternalName": {"String": "Sword"}
+        }
+    }
+}
