@@ -6,7 +6,7 @@ local mouse
 
 local function UpdateIcon()
 	if mouse then
-		mouse.Icon = tool.Enabled and MOUSE_ICON or RELOADING_ICON
+		mouse.Icon = if tool.Enabled then MOUSE_ICON else RELOADING_ICON
 	end
 end
 
