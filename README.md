@@ -11,9 +11,9 @@ This is an open-sourced version of the sword used in [stfo tourney](https://www.
 
 ## About
 
-This is an open-sourced version of the sword that are currently used in our tournament place, where we've repeatedly tested and optimized this sword with upwards of 250 players in a single server.
+This is an open-sourced version of the sword that is currently used in our tournament place, where we've repeatedly tested and optimized this sword with upwards of 250 players in a single server.
 
-Our goal is to provide a customizable, seamless, and performant solution for clanners, developers, and SFers alike.
+Our goal is to provide an easy-to-use, customizable, and performant solution for clanners, developers, and SFers alike.
 
 ## Features
 
