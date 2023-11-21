@@ -12,7 +12,7 @@ local wielder: Player?;
 local tool = script.Parent
 local handle = tool.Handle
 local config = require(tool.Config)
-local damage = 0
+local damage = config.Damage.Idle
 
 local sounds = {
 	Slash = handle.Slash;
@@ -111,7 +111,7 @@ local function blow(hit)
 	local character = tool.Parent
 	local humanoid = hit.Parent:FindFirstChild("Humanoid")
 
-	if not wielder or not humanoid or character.Humanoid.Health <= 0 or not character:FindFirstChild("Right Arm") then
+	if not wielder or not humanoid or (character.Humanoid.Health <= 0 and not config.ForceTie) or not character:FindFirstChild("Right Arm") then
 		return
 	end
 
@@ -141,7 +141,7 @@ local function onActivate()
 		slash()
 	end
 	lastAttack = cooldown
-	damage = config.Damage
+	damage = config.Damage.Idle
 	tool.Enabled = true
 end
 
