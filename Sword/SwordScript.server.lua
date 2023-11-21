@@ -147,14 +147,19 @@ end
 
 -- Events
 
+local diedConnection: RBXScriptConnection?;
 tool.Equipped:Connect(function()
 	wielder = Players:GetPlayerFromCharacter(tool.Parent)
 	local humanoid = tool.Parent.Humanoid
 
 	sounds.Unsheath:Play()
-	humanoid.Died:Connect(function()
+	diedConnection = humanoid.Died:Connect(function()
 		Debris:AddItem(tool, 0.75)
 	end)
+end)
+
+tool.Unequipped:Connect(function()
+	diedConnection:Disconnect()
 end)
 
 tool.Activated:Connect(onActivate)
