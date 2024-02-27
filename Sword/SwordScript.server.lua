@@ -13,118 +13,28 @@ local tool = script.Parent
 local handle = tool.Handle
 local config = require(tool.Config)
 local damage = config.Damage.Idle
-
-local sounds = {
-	Slash = handle.Slash;
-	Lunge = handle.Lunge;
-	Unsheath = handle.Unsheath;
-}
-
--- Checks if two players are teammates
-local function isTeammate(player1: Player, player2: Player): boolean
-	return player1 and player2 and not player1.Neutral and not player2.Neutral and player1.TeamColor == player2.TeamColor
-end
-
--- Use tourney teammate function if TourneyMode is enabled
-if config.TourneyMode and shared.IsTeammateFunction then
-	isTeammate = shared.IsTeammateFunction
-end
-
--- Damage validation
-local function canDamage(hit: BasePart)
-	local character = hit.Parent
-
-	-- Make sure the character still has a Humanoid and HumanoidRootPart
-	if character:FindFirstChild("Humanoid") == nil or character:FindFirstChild("HumanoidRootPart") == nil then
-		return false
-	end
-
-	-- Check if it's a player or an NPC
-	local hitPlayer = Players:GetPlayerFromCharacter(character)
-	if hitPlayer == nil and not config.DamageNPCs then
-		return false
-	end
-
-	-- Check sword distance
-	local distance = (handle.Position - hit.Position).Magnitude
-	if config.MaxDistance > 0 and distance > config.MaxDistance then
-		return false
-	end
-
-	-- Check if player is a teammate
-	if hitPlayer and isTeammate(wielder, hitPlayer) then
-		return false
-	end
-
-	return true
-end
-
-local function tagHumanoid(humanoid: Humanoid, player: Player, hit: BasePart?)
-	local tag = Instance.new("ObjectValue")
-	tag.Name = config.TourneyMode and "SwordDmgTag" or "creator"
-	tag.Value = player
-	tag.Parent = humanoid
-	Debris:AddItem(tag, 2)
-	if handle and hit then
-		tag:SetAttribute("Distance", (handle.Position - hit.Position).Magnitude)
-	end
-end
-
-local function untagHumanoid(humanoid: Humanoid)
-	for i, v in pairs(humanoid:GetChildren()) do
-		if v:IsA("ObjectValue") and (v.Name == "SwordDmgTag" or v.Name == "creator") then
-			v:Destroy()
-		end
-	end
-end
+local character
 
 local function slash()
 	damage = config.Damage.Slash
-	sounds.Slash:Play()
 	local anim = Instance.new("StringValue")
 	anim.Name = "toolanim"
 	anim.Value = "Slash"
 	anim.Parent = tool
+	Debris:AddItem(anim, 1)
 end
 
 local function lunge()
 	damage = config.Damage.Lunge
-	sounds.Lunge:Play()
 	local anim = Instance.new("StringValue")
 	anim.Name = "toolanim"
 	anim.Value = "Lunge"
 	anim.Parent = tool
-	if config.Float and wielder then
-		local force = Instance.new("BodyVelocity")
-		force.Velocity = Vector3.new(0, 10, 0)
-		force.MaxForce = Vector3.new(0, 2900, 0)
-		force.Parent = wielder.Character.HumanoidRootPart
-		Debris:AddItem(force, 0.5)
-	end
+	Debris:AddItem(anim, 1)
 	task.wait(0.25)
-	tool.Grip = config.Grips.Out
+	tool.GripUp = Vector3.new(1, 0, 0)
 	task.wait(0.75)
-	tool.Grip = config.Grips.Up
-end
-
-local function blow(hit)
-	local character = tool.Parent
-	local humanoid = hit.Parent:FindFirstChild("Humanoid")
-
-	if not wielder or not humanoid or (character.Humanoid.Health <= 0 and not config.ForceTie) or not character:FindFirstChild("Right Arm") then
-		return
-	end
-
-	if not config.ForceFieldDamage and character:FindFirstChildOfClass("ForceField") then
-		return
-	end
-
-	if humanoid and humanoid ~= character.Humanoid and canDamage(hit) then
-		untagHumanoid(humanoid)
-		tagHumanoid(humanoid, wielder, hit)
-
-		humanoid:TakeDamage(damage)
-	end
+	tool.GripUp = Vector3.new(0, 0, 1)
 end
 
 local lastAttack = 0
@@ -147,20 +57,71 @@ end
 
 -- Events
 
-local diedConnection: RBXScriptConnection?;
 tool.Equipped:Connect(function()
+	character = tool.Parent
 	wielder = Players:GetPlayerFromCharacter(tool.Parent)
-	local humanoid = tool.Parent.Humanoid
-
-	sounds.Unsheath:Play()
-	diedConnection = humanoid.Died:Connect(function()
-		Debris:AddItem(tool, 0.75)
-	end)
-end)
-
-tool.Unequipped:Connect(function()
-	diedConnection:Disconnect()
 end)
 
 tool.Activated:Connect(onActivate)
-handle.Touched:Connect(blow)
+
+local function isTeammate(player1: Player, player2: Player): boolean
+	return player1 and player2 and not player1.Neutral and not player2.Neutral and player1.TeamColor == player2.TeamColor
+end
+
+if config.TourneyMode and shared.TeammateCheck then
+	isTeammate = shared.TeammateCheck
+end
+
+-- Damage validation
+local function canDamage(hit: BasePart)
+	local character = hit.Parent
+
+	-- Check sword distance
+	local distance = (handle.Position - hit.Position).Magnitude
+	if config.MaxDistance > 0 and distance > config.MaxDistance then
+		return false
+	end
+
+	-- Check if player is a teammate using cached result
+	local hitPlayer = Players:GetPlayerFromCharacter(character)
+	if hitPlayer and isTeammate(wielder, hitPlayer) then
+		return false
+	end
+
+	return true
+end
+
+handle.Touched:Connect(function(hit)
+	if hit.Parent == nil then return end
+	local humanoid = hit.Parent:FindFirstChild("Humanoid")
+
+	-- Check if RightGrip still exists
+	if character == nil or character:FindFirstChild("Right Arm") == nil or character["Right Arm"]:FindFirstChild("RightGrip") == nil then
+		return false
+	end
+
+	if not wielder or not humanoid or (character.Humanoid.Health <= 0 and not config.ForceTie) then
+		return
+	end
+
+	if not config.ForceFieldDamage and character:FindFirstChildOfClass("ForceField") then
+		return
+	end
+
+	if humanoid ~= character.Humanoid and humanoid.Health > 0 and canDamage(hit) then
+		humanoid:TakeDamage(damage)
+		if humanoid.Health <= 0 and not hit.Parent:GetAttribute("Dead") then
+			hit.Parent:SetAttribute("Dead", true)
+			local hitPlayer = Players:GetPlayerFromCharacter(humanoid.Parent)
+			if hitPlayer then
+				local distance = (handle.Position - hit.Position).Magnitude
+				local creatorTag = Instance.new("ObjectValue")
+				creatorTag.Name = "creator"
+				creatorTag.Value = wielder
+				creatorTag:SetAttribute("Distance", distance)
+				creatorTag.Parent = humanoid
+				Debris:AddItem(creatorTag, 1)
+			end
+		end
+	end
+end)
