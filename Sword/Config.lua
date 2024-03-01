@@ -4,7 +4,7 @@ return {
 		Slash = 10; -- Slash damage
 		Lunge = 30; -- Lunge damage
 	};
-	MaxDistance = 12; -- Max distance for damage, set to 0 to disable
+	MaxDistance = 10.5; -- Max distance for damage, set to 0 to disable
 	ForceTie = false; -- Force tie (allows sword to still do damage after a player dies)
 	DamageNPCs = true; -- Allows the sword to damage non-players
 	ForceFieldDamage = false; -- Ability to damage while having a forcefield
