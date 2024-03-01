@@ -76,15 +76,13 @@ end
 local function canDamage(hit: BasePart)
 	local character = hit.Parent
 
-	-- Check sword distance
-	local distance = (handle.Position - hit.Position).Magnitude
-	if config.MaxDistance > 0 and distance > config.MaxDistance then
+	-- Check if player is a teammate
+	local hitPlayer = Players:GetPlayerFromCharacter(character)
+	if hitPlayer and isTeammate(wielder, hitPlayer) then
 		return false
 	end
 
-	-- Check if player is a teammate using cached result
-	local hitPlayer = Players:GetPlayerFromCharacter(character)
-	if hitPlayer and isTeammate(wielder, hitPlayer) then
+	if hitPlayer and wielder:DistanceFromCharacter(hit.Position) > config.MaxDistance then
 		return false
 	end
 
@@ -114,7 +112,7 @@ handle.Touched:Connect(function(hit)
 			hit.Parent:SetAttribute("Dead", true)
 			local hitPlayer = Players:GetPlayerFromCharacter(humanoid.Parent)
 			if hitPlayer then
-				local distance = (handle.Position - hit.Position).Magnitude
+				local distance = wielder:DistanceFromCharacter(hit.Position)
 				local creatorTag = Instance.new("ObjectValue")
 				creatorTag.Name = "creator"
 				creatorTag.Value = wielder
