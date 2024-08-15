@@ -13,6 +13,7 @@ local tool = script.Parent
 local handle = tool.Handle
 local config = require(tool.Config)
 local damage = config.Damage.Idle
+local healAmount = config.HealAmount
 
 local sounds = {
 	Slash = handle.Slash;
@@ -42,6 +43,11 @@ local function canDamage(hit: BasePart)
 	-- Check if it's a player or an NPC
 	local hitPlayer = Players:GetPlayerFromCharacter(character)
 	if hitPlayer == nil and not config.DamageNPCs then
+		return false
+	end
+
+	-- Check if they are already dead
+	if character:FindFirstChildWhichIsA("Humanoid").Health <= 0 then
 		return false
 	end
 
@@ -107,6 +113,16 @@ local function lunge()
 	tool.Grip = config.Grips.Up
 end
 
+local function takeDamage(wielder: Player, humanoid: Humanoid, damage: IntValue)
+	humanoid:TakeDamage(damage)
+
+	-- Heal the player
+	if humanoid.Health <= 0 and wielder and healAmount > 0 then
+		local currentHealth = wielder.Character.Humanoid.Health
+		wielder.Character.Humanoid.Health = math.min(currentHealth + healAmount, 100)
+	end
+end
+
 local function blow(hit)
 	local character = tool.Parent
 	local humanoid = hit.Parent:FindFirstChild("Humanoid")
@@ -118,12 +134,10 @@ local function blow(hit)
 	if not config.ForceFieldDamage and character:FindFirstChildOfClass("ForceField") then
 		return
 	end
-
 	if humanoid and humanoid ~= character.Humanoid and canDamage(hit) then
 		untagHumanoid(humanoid)
 		tagHumanoid(humanoid, wielder, hit)
-
-		humanoid:TakeDamage(damage)
+		takeDamage(wielder, humanoid, damage)
 	end
 end
 
